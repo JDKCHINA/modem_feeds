@@ -126,7 +126,7 @@ scan_pcie_slot_interfaces()
     dun_devices=""
     [ ! -d "$slot_path" ] && return
     local short_slot_name=`echo ${slot:2:-2} |tr ":" "."`
-    local slot_interfaces=$(ls $slot_path | grep -E "_${short_slot_name}_")
+    local slot_interfaces=$(ls $slot_path | grep -E "_*${short_slot_name}_")
     for interface in $slot_interfaces; do
         unset device
         unset dun_device
@@ -173,6 +173,8 @@ scan_pcie_slot_interfaces()
             [ -z "$interface_driver" ] && continue
             case $interface_driver in
                 option|\
+                cdc_acm|\
+                usbserial_generic|\
                 usbserial)
                     ttyUSB_device=$(ls "$assoc_usb_path/$interface/" | grep ttyUSB)
                     ttyACM_device=$(ls "$assoc_usb_path/$interface/" | grep ttyACM)
@@ -207,6 +209,8 @@ scan_usb_slot_interfaces()
         [ -z "$interface_driver" ] && continue
         case $interface_driver in
             option|\
+            cdc_acm|\
+            usbserial_generic|\
             usbserial)
                 ttyUSB_device=$(ls "$slot_path/$interface/" | grep ttyUSB)
                 ttyACM_device=$(ls "$slot_path/$interface/" | grep ttyACM)

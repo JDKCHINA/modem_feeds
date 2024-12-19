@@ -347,3 +347,27 @@ get_reboot_caps()
     json_close_object
     json_dump
 }
+
+rate_convert()
+{
+    #check if bc is installed
+    is_bc_installed=$(which bc)
+    local rate=$1
+    rate_units="bps Kbps Mbps Gbps"
+    if [ -z "$is_bc_installed" ]; then
+        for i in $(seq 0 3); do
+            if [ $rate -lt 1024 ]; then
+                break
+            fi
+            rate=$(($rate / 1024))
+        done
+    else
+        for i in $(seq 0 3); do
+            if [ $(echo "$rate < 1024" | bc) -eq 1 ]; then
+                break
+            fi
+            rate=$(echo "scale=2; $rate / 1024" | bc)
+        done
+    fi
+    echo "$rate `echo $rate_units | cut -d ' ' -f $(($i+1))`"
+}

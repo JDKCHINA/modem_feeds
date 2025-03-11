@@ -22,12 +22,14 @@ LUCI_DEPENDS:=+luci-compat \
 		+PACKAGE_luci-app-qmodem_INCLUDE_generic-qmi-wwan:kmod-usb-net-qmi-wwan \
 		+PACKAGE_luci-app-qmodem_INCLUDE_vendor-qmi-wwan:kmod-qmi_wwan_q \
 		+PACKAGE_luci-app-qmodem_INCLUDE_vendor-qmi-wwan:kmod-qmi_wwan_f \
-		+PACKAGE_luci-app-qmodem_INCLUDE_vendor-qmi-wwan:kmod-qmi_wwan_m \
+		+PACKAGE_luci-app-qmodem_INCLUDE_vendor-qmi-wwan:kmod-qmi_wwan_s \
 		+usbutils \
 		+PACKAGE_luci-app-qmodem_INCLUDE_ADD_PCI_SUPPORT:kmod-pcie_mhi \
 		+PACKAGE_luci-app-qmodem_INCLUDE_ADD_PCI_SUPPORT:pciutils \
+		+PACKAGE_luci-app-qmodem_INCLUDE_ADD_QFIREHOSE_SUPPORT:qfirehose \
 		+PACKAGE_luci-app-qmodem_USE_TOM_CUSTOMIZED_QUECTEL_CM:quectel-CM-5G-M \
 		+PACKAGE_luci-app-qmodem_USING_QWRT_QUECTEL_CM_5G:quectel-CM-5G \
+		+PACKAGE_luci-app-qmodem_USING_NORMAL_QUECTEL_CM:quectel-cm \
 		+luci-app-qmodem_with_lua_index_page \
 		+tom_modem \
 		+jq +bc\
@@ -41,8 +43,8 @@ endef
 define Package/luci-app-qmodem/config
 choice
   prompt "Qualcomm QMI WWAN Driver Selection"
-  default PACKAGE_luci-app-qmodem_INCLUDE_generic-qmi-wwan
-  
+  default PACKAGE_luci-app-qmodem_INCLUDE_vendor-qmi-wwan
+
   config PACKAGE_luci-app-qmodem_INCLUDE_vendor-qmi-wwan
   bool "Vendor QMI driver"
 
@@ -53,16 +55,23 @@ endchoice
 choice
   prompt "Quectel Connect Manager Selection"
   default PACKAGE_luci-app-qmodem_USE_TOM_CUSTOMIZED_QUECTEL_CM
-  
+
 	config PACKAGE_luci-app-qmodem_USE_TOM_CUSTOMIZED_QUECTEL_CM
 	bool "Tom customized Quectel CM"
 
 	config PACKAGE_luci-app-qmodem_USING_QWRT_QUECTEL_CM_5G
 	bool "QWRT Quectel-CM-5G"
+
+	config PACKAGE_luci-app-qmodem_USING_NORMAL_QUECTEL_CM
+	bool "NORMAL Quectel-CM"
 endchoice
 
 	config PACKAGE_luci-app-qmodem_INCLUDE_ADD_PCI_SUPPORT
 		bool "Add PCIe Modem SUPPORT"
+		default n
+
+	config PACKAGE_luci-app-qmodem_INCLUDE_ADD_QFIREHOSE_SUPPORT
+		bool "Add Qfirehose SUPPORT"
 		default n
 endef
 

@@ -7,23 +7,23 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=qmi_wwan_q
-PKG_VERSION:=1.2.9
-PKG_RELEASE:=1
+PKG_NAME:=qmi_wwan_s
+PKG_VERSION:=1.0
+PKG_RELEASE:=2
 
 include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/package.mk
 
-define KernelPackage/qmi_wwan_q
+define KernelPackage/qmi_wwan_s
   SUBMENU:=WWAN Support
-  TITLE:=Quectel Linux USB QMI WWAN Driver
+  TITLE:=Simcom Linux USB QMI WWAN Driver
   DEPENDS:=+kmod-usb-net +kmod-usb-wdm
-  FILES:=$(PKG_BUILD_DIR)/qmi_wwan_q.ko
-  AUTOLOAD:=$(call AutoLoad,81,qmi_wwan_q)
+  FILES:=$(PKG_BUILD_DIR)/qmi_wwan_s.ko
+  AUTOLOAD:=$(call AutoLoad,82,qmi_wwan_s)
 endef
 
-define KernelPackage/qmi_wwan_q/description
-  Quectel Linux USB QMI WWAN Driver
+define KernelPackage/qmi_wwan_s/description
+  Simcom Linux USB QMI WWAN Driver
 endef
 
 MAKE_OPTS:= \
@@ -44,4 +44,4 @@ define Build/Compile
 		modules
 endef
 
-$(eval $(call KernelPackage,qmi_wwan_q))
+$(eval $(call KernelPackage,qmi_wwan_s))

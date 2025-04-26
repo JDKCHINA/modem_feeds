@@ -3285,6 +3285,7 @@ static int mhi_netdev_probe(struct mhi_device *mhi_dev,
 		|| (mhi_dev->vendor == 0x1eac && mhi_dev->dev_id == 0x1004)
 		|| (mhi_dev->vendor == 0x17cb && mhi_dev->dev_id == 0x011a)
 		|| (mhi_dev->vendor == 0x1eac && mhi_dev->dev_id == 0x100b)
+		|| (mhi_dev->vendor == 0x1eac && mhi_dev->dev_id == 0x1007)
 		|| (mhi_dev->vendor == 0x17cb && mhi_dev->dev_id == 0x0309)
 	) {
 		mhi_netdev->qmap_version = 9;

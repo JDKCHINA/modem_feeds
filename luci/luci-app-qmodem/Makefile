@@ -26,6 +26,8 @@ LUCI_DEPENDS:=+luci-compat \
 		+usbutils \
 		+PACKAGE_luci-app-qmodem_INCLUDE_ADD_PCI_SUPPORT:kmod-pcie_mhi \
 		+PACKAGE_luci-app-qmodem_INCLUDE_ADD_PCI_SUPPORT:pciutils \
+		+PACKAGE_luci-app-qmodem_INCLUDE_ADD_MTK_T7XX_SUPPORT:umbim \
+		+PACKAGE_luci-app-qmodem_INCLUDE_ADD_MTK_T7XX_SUPPORT:kmod-mtk-t7xx \
 		+PACKAGE_luci-app-qmodem_INCLUDE_ADD_QFIREHOSE_SUPPORT:qfirehose \
 		+PACKAGE_luci-app-qmodem_USE_TOM_CUSTOMIZED_QUECTEL_CM:quectel-CM-5G-M \
 		+PACKAGE_luci-app-qmodem_USING_QWRT_QUECTEL_CM_5G:quectel-CM-5G \
@@ -33,7 +35,6 @@ LUCI_DEPENDS:=+luci-compat \
 		+tom_modem \
 		+jq +bc\
 		+coreutils +coreutils-stat
-		
 
 define Package/luci-app-qmodem/conffiles
 /etc/config/qmodem
@@ -67,6 +68,10 @@ endchoice
 
 	config PACKAGE_luci-app-qmodem_INCLUDE_ADD_PCI_SUPPORT
 		bool "Add PCIe Modem SUPPORT"
+		default n
+
+	config PACKAGE_luci-app-qmodem_INCLUDE_ADD_MTK_T7XX_SUPPORT
+		bool "Add MTK-T7XX Modem PCI SUPPORT"
 		default n
 
 	config PACKAGE_luci-app-qmodem_INCLUDE_ADD_QFIREHOSE_SUPPORT

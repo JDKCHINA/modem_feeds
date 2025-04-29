@@ -64,6 +64,9 @@ msgstr "扩展前缀"
 msgid "Once checking, the prefix will be apply to lan zone"
 msgstr "启用后，该接口的前缀会被通告至Lan区域"
 
+msgid "enable modem soft reboot"
+msgstr "启用模组软重启"
+
 msgid "PDP Type"
 msgstr "PDP类型"
 

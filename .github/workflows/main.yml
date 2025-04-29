@@ -2,10 +2,10 @@ name: "Auto compile with OpenWrt SDK"
 on:
   workflow_dispatch:
   push:
+    branches:
+      - '*'    
     tags:
       - 'v*'
-    branches:
-      - main
     paths-ignore:
       - "docs/**"
       - "README.md"
@@ -32,6 +32,7 @@ jobs:
       branch_name: ${{ env.branch_name }}
       tag_name: ${{ env.tag_name }}
       push_type: ${{ env.push_type }}
+      is_pr: ${{ env.is_pr }}
 
     steps:
       - name: Determine push type
@@ -45,6 +46,8 @@ jobs:
               echo "branch_name=${{ github.ref_name }}" >> $GITHUB_ENV
               echo "push_type=branch" >> $GITHUB_ENV
             fi
+            is_pr=$([[ "${{ github.event_name }}" == "pull_request" ]] && echo 1 || echo 0)
+            echo "is_pr=${is_pr}" >> $GITHUB_ENV
 
       - name: Checkout
         if: 
@@ -59,7 +62,7 @@ jobs:
           python3 ./scripts/update_support_list.py temp_support_list ./luci/luci-app-qmodem/root/usr/share/qmodem/modem_support.json
           is_diff=$(diff ./temp_support_list.md ./docs/support_list.md > /dev/null 2>&1 && echo 0 || echo 1)
           echo "is_diff=${is_diff}" >> $GITHUB_ENV
-          if [[ ${is_diff} == 1 ]]; then
+          if [[ ${is_pr} == 0 ]] && [[ ${is_diff} == 1 ]]; then
             mv temp_support_list.md ./docs/support_list.md
             git config --global user.name "GitHub Action"
             git config --global user.email "github-action@users.noreply.github.com"
@@ -172,6 +175,7 @@ jobs:
     name: Release Artifacts
     needs: [job_build_qmodem, job_prepare]
     runs-on: ubuntu-latest
+    if: ${{ needs.job_prepare.outputs.push_type == 'tag' }}
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4

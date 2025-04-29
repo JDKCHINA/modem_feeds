@@ -58,6 +58,11 @@ get_mode()
                 "41") mode="rndis" ;;
                 *) mode="$mode_num" ;;
             esac
+            driver=$(get_driver)
+            case "$driver" in
+                "mtk_pcie")
+                    mode="mbim" ;;
+            esac
         ;;
         *)
             mode="$mode_num"

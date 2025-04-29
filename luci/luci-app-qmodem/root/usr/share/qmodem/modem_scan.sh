@@ -176,12 +176,12 @@ scan_pcie_slot_interfaces()
     #mt_t7xx device
     wwan_path="$slot_path/wwan"
     if [  -d "$wwan_path" ]; then
-    	net_devices=$(ls "$wwan_path" | grep -E "wwan[0-9]")
-    	devices_path="$wwan_path/$net_devices"
-    	if [ -d "$devices_path" ];then
-      		mbim_devices=$(ls "$devices_path" | grep -E "wwan[0-9]mbim[0-9]")
-      		dun_devices=$(ls "$devices_path" | grep -E "wwan[0-9]at[0-9]")
-    	fi
+        net_devices=$(ls "$wwan_path" | grep -E "wwan[0-9]")
+        devices_path="$wwan_path/$net_devices"
+        if [ -d "$devices_path" ];then
+            mbim_devices=$(ls "$devices_path" | grep -E "wwan[0-9]mbim[0-9]")
+            dun_devices=$(ls "$devices_path" | grep -E "wwan[0-9]at[0-9]")
+        fi
     fi
     echo "net_devices: $net_devices dun_devices: $dun_devices"
     at_ports="$dun_devices" 
@@ -283,25 +283,23 @@ match_config()
     [[ "$name" = *"nl668"* ]] && name="nl668"
     [[ "$name" = *"nl678"* ]] && name="nl678"
 
-	[[ "$name" = *"em120k"* ]] && name="em120k"
+    [[ "$name" = *"em120k"* ]] && name="em120k"
 
-	#FM350-GL-00 5G Module
-	[[ "$name" = *"fm350-gl"* ]] && name="fm350-gl"
+    #FM350-GL-00 5G Module
+    [[ "$name" = *"fm350-gl"* ]] && name="fm350-gl"
 
-	#RM500U-CNV
-	[[ "$name" = *"rm500u-cn"* ]] && name="rm500u-cn"
+    #RM500U-CNV
+    [[ "$name" = *"rm500u-cn"* ]] && name="rm500u-cn"
 
-	[[ "$name" = *"rm500u-ea"* ]] && name="rm500u-ea"
-	#t99w175
-	[[ "$name" = *"mv31-w"* ]] && name="t99w175"
+    [[ "$name" = *"rm500u-ea"* ]] && name="rm500u-ea"
+    #t99w175
+    [[ "$name" = *"mv31-w"* ]] || [[ "$name" = *"T99W175"* ]] && name="t99w175"
 
-        [[ "$name" = *"T99W175"* ]] && name="t99w175"
+    [[ "$name" = *"T99W373"* ]] && name="t99w373"
 
-        [[ "$name" = *"T99W373"* ]] && name="t99w373"
+    [[ "$name" = *"SIM8380G"* ]] && name="SIM8380G-M2"
 
-	[[ "$name" = *"SIM8380G"* ]] && name="SIM8380G-M2"
-
-	#rg200u-cn
+    #rg200u-cn
     [[ "$name" = *"rg200u-cn"* ]] && name="rg200u-cn"
 
     modem_config=$(echo $modem_support | jq '.modem_support."'$slot_type'"."'$name'"')
@@ -414,6 +412,7 @@ add()
 set qmodem.$section_name.path="$modem_path"
 set qmodem.$section_name.data_interface="$slot_type"
 set qmodem.$section_name.enable_dial="1"
+set qmodem.$section_name.soft_reboot="0"
 set qmodem.$section_name.pdp_type="ip"
 set qmodem.$section_name.state="enabled"
 set qmodem.$section_name.metric=$metric

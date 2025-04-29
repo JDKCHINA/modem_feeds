@@ -48,6 +48,9 @@ msgstr ""
 msgid "Once checking, the prefix will be apply to lan zone"
 msgstr ""
 
+msgid "enable modem soft reboot"
+msgstr ""
+
 msgid "PDP Type"
 msgstr ""
 

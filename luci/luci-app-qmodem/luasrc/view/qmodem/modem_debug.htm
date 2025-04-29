@@ -735,7 +735,7 @@
 			}
 			
 		}
-	
+
 		update(){
 			this.get_config();
 		}
@@ -748,31 +748,36 @@
 			this.get_action = "get_neighborcell";
 			this.set_action = "set_neighborcell";
 			this.task = null;
-			this.init_nc_table();			
-		}
-		
-		pause(){
-			if (this.task != null) {
-				clearInterval(this.task);
-			}
+			this.init_nc_table();
 		}
 
-		update(){
-			this.task = setInterval(() => {
-				this.get_config();
-			},10000);
+		scan_neighborcell(){
+			this.get_config();
 		}
+
+		// pause(){
+		// 	if (this.task != null) {
+		// 		clearInterval(this.task);
+		// 	}
+		// }
+
+		// update(){
+			
+		// 	this.task = setInterval(() => {
+		// 		this.get_config();
+		// 	},10000);
+		// }
 
 		nr_options(){
-				if (this.rat_input.selectedIndex == 0) {
-					this.band_tr.style.display = "none";
-					this.scs_tr.style.display = "none";
-				}
-				else{
-					this.band_tr.style.display = "";
-					this.scs_tr.style.display = "";
-				}
+			if (this.rat_input.selectedIndex == 0) {
+				this.band_tr.style.display = "none";
+				this.scs_tr.style.display = "none";
 			}
+			else{
+				this.band_tr.style.display = "";
+				this.scs_tr.style.display = "";
+			}
+		}
 
 		init_nc_table(){
 			var neighborcell_table,setting_table,status_table ;
@@ -835,7 +840,6 @@
 			scs_tr.appendChild(td);
 			scs_tr.appendChild(td1);
 
-			
 			status_th = this.createTH("<%:Status%>");
 			status_trh = this.createTRHeader();
 			status_trh.appendChild(status_th);
@@ -865,12 +869,18 @@
 				this.set_config(JSON.stringify(config));
 			});
 
+			//add scan button
+			var scan_btn = this.createBTN("<%:Scan%>",() => {
+				this.scan_neighborcell();
+			});
+
 			this.setting_table.appendChild(header);
 			this.setting_table.appendChild(rat_tr);
 			this.setting_table.appendChild(pci_tr);
 			this.setting_table.appendChild(arfcn_tr);
 			this.setting_table.appendChild(band_tr);
 			this.setting_table.appendChild(scs_tr);
+			this.setting_table.appendChild(scan_btn);
 			this.setting_table.appendChild(submit_btn);
 		}
 
@@ -884,7 +894,7 @@
 			nr = this.config.NR;
 			lte = this.config.LTE;
 			for (let cell_info of nr) {
-					this.create_nc_tr(1,cell_info);
+				this.create_nc_tr(1,cell_info);
 				}
 			for (let cell_info of lte) {
 				this.create_nc_tr(0,cell_info);
@@ -925,17 +935,18 @@
 				}	
 			}
 			let tr_left = this.createTD(text);
-			let tr_right = this.create_copy_btn_td(rat,cell_info.pci,cell_info.arfcn);
+			let tr_right = this.create_copy_btn_td(rat,cell_info);
 			let tr = this.createTR();
 			tr.appendChild(tr_left);
 			tr.appendChild(tr_right);
 			this.neighborcell_table.appendChild(tr);
 		}
 
-		create_copy_btn_td(rat,pci,arfcn){
+		create_copy_btn_td(rat,cell_info){
 			var copy_btn = this.createBTN("<%:Copy%>",() => {
-				this.pci_input.value = pci;
-				this.arfcn_input.value = arfcn;
+				this.pci_input.value = cell_info.pci;
+ 				this.arfcn_input.value = cell_info.arfcn;
+ 				this.band_input.value = cell_info.band;
 				this.rat_input.selectedIndex = rat;
 				this.nr_options()
 			});

@@ -73,6 +73,10 @@ extend_prefix = s:taboption("advanced", Flag, "extend_prefix", translate("Extend
 extend_prefix.description = translate("Once checking, the prefix will be apply to lan zone")
 extend_prefix.default = "0"
 
+soft_reboot = s:taboption("advanced", Flag, "soft_reboot", translate("Soft Reboot"))
+soft_reboot.description = translate("enable modem soft reboot")
+soft_reboot.default = "0"
+
 -- 网络类型
 pdp_type= s:taboption("advanced", ListValue, "pdp_type", translate("PDP Type"))
 pdp_type.default = "ipv4v6"

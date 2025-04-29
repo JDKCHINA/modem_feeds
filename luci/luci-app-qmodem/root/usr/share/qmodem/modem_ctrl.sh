@@ -3,7 +3,7 @@ source /usr/share/libubox/jshn.sh
 method=$1
 config_section=$2
 at_port=$(uci get qmodem.$config_section.at_port)
-sms_at_port=$(uci get qmodem.$config_section.sms_at_port)
+uci -q get qmodem.$config_section.sms_at_port >/dev/null && sms_at_port=$(uci get qmodem.$config_section.sms_at_port)
 vendor=$(uci get qmodem.$config_section.manufacturer)
 platform=$(uci get qmodem.$config_section.platform)
 define_connect=$(uci get qmodem.$config_section.define_connect)

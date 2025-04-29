@@ -69,6 +69,9 @@ name.cfgvalue = function(t, n)
     return Value.cfgvalue(t, n) or "-"
 end
 
+soft_reboot = s:option(Flag, "soft_reboot", translate("Soft Reboot"))
+soft_reboot.default = "0"
+
 -- PDP Context Index
 define_connect = s:option(Value, "define_connect", translate("PDP Context Index"))
 define_connect.default = "1"

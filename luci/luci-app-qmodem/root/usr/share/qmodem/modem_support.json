@@ -1005,6 +1005,15 @@
                     "mbim"
                 ]
             },
+            "rw350r-gl": {
+                "manufacturer": "fibocom",
+                "platform": "mediatek",
+                "data_interface": "pcie",
+                "define_connect": "1",
+                "modes": [
+                    "mbim"
+                ]
+            },
             "fm150-ae": {
                 "manufacturer": "fibocom",
                 "platform": "qualcomm",

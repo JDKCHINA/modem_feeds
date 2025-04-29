@@ -38,7 +38,7 @@ fm650-cn | unisoc |✔ usb(ecm,mbim,rndis,ncm) | ✘
 fm350-gl | mediatek |✔ usb(rndis) | ✔ pcie(mbim)
 fm350-gl-00 | mediatek |✔ usb(rndis) | ✘
 fm350r-gl | mediatek |✔ usb(rndis) | ✔ pcie(mbim)
-rw350r-gl | mediatek |✔ usb(rndis) | ✘
+rw350r-gl | mediatek |✔ usb(rndis) | ✔ pcie(mbim)
 fm150-ae | qualcomm |✔ usb(qmi,gobinet,ecm,mbim,rndis,ncm) | ✔ pcie(qmi,mbim)
 fm160-cn | qualcomm |✔ usb(qmi,gobinet,ecm,mbim,rndis,ncm) | ✘
 fm160-na | qualcomm |✔ usb(qmi,gobinet,ecm,mbim,rndis,ncm) | ✘

@@ -4,6 +4,7 @@ action=$1
 config=$2
 slot_type=$3
 modem_support=$(cat /usr/share/qmodem/modem_support.json)
+modem_port_rule=$(cat /usr/share/qmodem/modem_port_rule.json)
 debug_subject="modem_scan"
 source /lib/functions.sh
 source /usr/share/qmodem/modem_util.sh
@@ -183,7 +184,7 @@ scan_pcie_slot_interfaces()
             dun_devices=$(ls "$devices_path" | grep -E "wwan[0-9]at[0-9]")
         fi
     fi
-    echo "net_devices: $net_devices dun_devices: $dun_devices"
+    m_debug "net_devices: $net_devices dun_devices: $dun_devices"
     at_ports="$dun_devices" 
     [ -n "$net_devices" ] && get_associate_usb $slot
     if [ -n "$associated_usb" ] && [ -d "/sys/bus/usb/devices/$associated_usb" ]; then
@@ -225,6 +226,34 @@ scan_usb_slot_interfaces()
     net_devices=""
     tty_devices=""
     [ ! -d "$slot_path" ] && return
+
+    slot_vid=$(cat "$slot_path/idVendor" 2>/dev/null || echo "")
+    slot_pid=$(cat "$slot_path/idProduct" 2>/dev/null || echo "")
+
+    # m_debug "($slot_vid:$slot_pid) $slot_path"
+
+    if [ -n "$slot_vid" ] && [ -n "$slot_pid" ]; then
+        modem_port_config=$(echo $modem_port_rule | jq '.modem_port_rule."'$slot_type'"."'$slot_vid:$slot_pid'"')
+        if [ "$modem_port_config" != "null" ] && [ -n "$modem_port_config" ]; then
+            config_modem_name=$(echo $modem_port_config | jq -r '.name' 2>/dev/null || echo "")
+            include_ports=$(echo $modem_port_config | jq -r '.include[]' 2>/dev/null || echo "")
+            option_driver=$(echo $modem_port_config | jq -r '.option_driver' 2>/dev/null || echo "0")
+
+            if [ -n "$include_ports" ]; then
+                include_mode=1
+                m_debug "using special config for $config_modem_name($slot_vid:$slot_pid) with ports: $include_ports"
+            fi
+        fi
+    else
+        m_debug "Unable to read VID/PID from device path: $slot_path"
+    fi
+
+    if [ "$option_driver" = "1" ] && [ -n "$slot_vid" ] && [ -n "$slot_pid" ]; then
+        if ! echo "$slot_vid $slot_pid" > /sys/bus/usb-serial/drivers/option1/new_id 2>/dev/null; then
+            m_debug "failed to set option driver"
+        fi
+    fi
+
     local slot_interfaces=$(ls $slot_path | grep -E "$slot:[0-9]\.[0-9]+")
     for interface in $slot_interfaces; do
         unset device
@@ -234,6 +263,9 @@ scan_usb_slot_interfaces()
         [ ! -d "$interface_driver_path" ] && continue
         interface_driver=$(basename $(readlink $interface_driver_path))
         [ -z "$interface_driver" ] && continue
+
+        local if_port=$(echo "$interface" | grep -oE "[0-9]+\.[0-9]+$" || echo "")
+
         case $interface_driver in
             option|\
             cdc_acm|\
@@ -244,7 +276,22 @@ scan_usb_slot_interfaces()
                 [ -z "$ttyUSB_device" ] && [ -z "$ttyACM_device" ] && continue
                 [ -n "$ttyUSB_device" ] && device="$ttyUSB_device"
                 [ -n "$ttyACM_device" ] && device="$ttyACM_device"
-                [ -z "$tty_devices" ] && tty_devices="$device" || tty_devices="$tty_devices $device"
+
+                local should_include=1
+
+                if [ $include_mode -eq 1 ]; then
+                    should_include=0
+                    for included_port in $include_ports; do
+                        if [ -n "$if_port" ] && [ "$included_port" = "$if_port" ]; then
+                            should_include=1
+                            break
+                        fi
+                    done
+                fi
+
+                if [ $should_include -eq 1 ]; then
+                    [ -z "$tty_devices" ] && tty_devices="$device" || tty_devices="$tty_devices $device"
+                fi
             ;;
             qmi_wwan*|\
             cdc_mbim|\
@@ -412,8 +459,9 @@ add()
 set qmodem.$section_name.path="$modem_path"
 set qmodem.$section_name.data_interface="$slot_type"
 set qmodem.$section_name.enable_dial="1"
-set qmodem.$section_name.soft_reboot="0"
-set qmodem.$section_name.pdp_type="ip"
+set qmodem.$section_name.soft_reboot="1"
+set qmodem.$section_name.extend_prefix="1"
+set qmodem.$section_name.pdp_type="ipv4v6"
 set qmodem.$section_name.state="enabled"
 set qmodem.$section_name.metric=$metric
 EOF

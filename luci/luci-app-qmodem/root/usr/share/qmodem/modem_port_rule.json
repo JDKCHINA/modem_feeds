@@ -1,0 +1,38 @@
+{
+    "modem_port_rule": {
+        "usb": {
+            "305a:1421": {
+                "name": "gm800",
+                "mode": "qmi",
+                "option_driver": 1,
+                "include": [
+                    "1.1"
+                ]
+            },
+            "305a:1404": {
+                "name": "gm800",
+                "mode": "rndis",
+                "option_driver": 0,
+                "include": [
+                    "1.1"
+                ]
+            },
+            "2dee:4d23": {
+                "name": "srm825xeu",
+                "mode": "ecm",
+                "option_driver": 1,
+                "include": [
+                    "1.1"
+                ]
+            },
+            "2dee:4d38": {
+                "name": "srm825xeu",
+                "mode": "rndis",
+                "option_driver": 1,
+                "include": [
+                    "1.3"
+                ]
+            }
+        }
+    }
+}

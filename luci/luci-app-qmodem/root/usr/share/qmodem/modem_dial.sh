@@ -114,6 +114,7 @@ update_config()
     config_get en_bridge $modem_config en_bridge
     config_get do_not_add_dns $modem_config do_not_add_dns
     config_get dns_list $modem_config dns_list
+    [ "$manufacturer" == "fibocom" ] && [ "$platform" == "mediatek" ] && config_get mtk_check $modem_config mtk_check
     config_get global_dial main enable_dial
     # config_get ethernet_5g u$modem_config ethernet 转往口获取命令更新，待测试
     config_foreach get_associate_ethernet_by_path modem-slot
@@ -233,7 +234,6 @@ check_ip()
                         ;;
                     "mediatek")
                         check_ip_command="AT+CGPADDR=3"
-                        stric=1
                         ;;
                 esac
                 ;;
@@ -263,14 +263,6 @@ check_ip()
         fi
 
         if [ -n "$ipaddr" ];then
-            if [ $mtk -eq 1 ] && echo "$ipv4_config" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
-                if [ "$pdp_type" = "ipv4v6" ];then
-                    if ! ping -c 2 -w 5 2400:3200::1 > /dev/null 2>&1; then
-                        m_debug "ipv6 is down,try to restart"
-                        ifdown "$interface6_name" && sleep 2 && ifup "$interface6_name"
-                    fi
-                fi
-            fi
             ipv6=$(echo $ipaddr | grep -oE "\b([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}\b")
             ipv4=$(echo $ipaddr | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
             if [ "$manufacturer" = "simcom" ];then
@@ -296,6 +288,39 @@ check_ip()
             connection_status="-1"
             m_debug "at port response unexpected $ipaddr"
         fi
+}
+
+check_mtk_connection()
+{
+    [ "$connection_status" = "0" ] || [ "$connection_status" = "-1" ] && return 0
+    if [ "$mtk" -eq 1 ] && [ -n "$ipv4" ] && [ -n "$modem_netcard" ]; then
+        for i in 1 2; do
+            if ping -I "$modem_netcard" -w 1 1.1.1.1 >/dev/null 2>&1 || 
+               ping -I "$modem_netcard" -w 2 8.8.8.8 >/dev/null 2>&1; then
+                break
+            fi
+            if [ $i -eq 2 ]; then
+                m_debug "IPv4 connection test failed, will redial"
+                return 1
+            fi
+            sleep 1
+        done
+        local ifup_time=$(ubus call network.interface.$interface6_name status 2>/dev/null | jsonfilter -e '@.uptime' 2>/dev/null || echo 0)
+        if [ -n "$ifup_time" ] && [ "$ifup_time" -gt 5 ] && [ "$pdp_type" = "ipv4v6" ] && [ -n "$ipv6" ]; then
+            for i in 1 2; do
+                if ping6 -I "$modem_netcard" -w 1 2400:3200::1 >/dev/null 2>&1 || 
+                   ping6 -I "$modem_netcard" -w 2 2001:4860:4860::8888 >/dev/null 2>&1; then
+                    break
+                fi
+                if [ $i -eq 2 ]; then
+                    m_debug "IPv6 connection test failed, restarting IPv6 interface"
+                    [ -n "$interface6_name" ] && ifdown "$interface6_name" && sleep 2 && ifup "$interface6_name"
+                fi
+                sleep 1
+            done
+        fi
+    fi
+    return 0
 }
 
 append_to_fw_zone()
@@ -604,9 +629,8 @@ ecm_hang()
         at_command='ATI'
     fi
 
-    tmp=$(at "${at_port}" "${at_command}")
+    fastat "${at_port}" "${at_command}"
 }
-
 
 hang()
 {
@@ -762,6 +786,14 @@ at_dial()
                     ;;
             esac
             ;;
+        "huawei")
+            case $platform in
+                "hisilicon")
+                    at_command="AT^SETAUTODIAL=1,1"
+                    cgdcont_command="AT+CGDCONT=1,\"$pdp_type\""
+                    ;;
+            esac
+            ;;
         "simcom")
             case $platform in
                 "qualcomm")
@@ -782,11 +814,13 @@ at_dial()
     esac
     m_debug "dialing vendor:$manufacturer;platform:$platform; $cgdcont_command ; $at_command"
     at "${at_port}" "${cgdcont_command}"
-    at "$at_port" "$at_command"
+    fastat "$at_port" "$at_command"
+    [ "$mtk" -eq 1 ] && sleep 2
     if [ "$driver" = "mtk_pcie" ];then
-        at "$at_port" "AT+CGACT=0,3"
+        fastat "$at_port" "AT+CGACT=0,3"
         mbim_port=$(echo "$at_port" | sed 's/at/mbim/g')
         umbim -d $mbim_port disconnect
+        sleep 1
         umbim -d $mbim_port connect 0
     fi
 }
@@ -794,12 +828,8 @@ at_dial()
 ip_change_fm350()
 {
     m_debug "ip_change_fm350"
-    local ipv4_config=""
-    local ipv4_dns1=""
-    local ipv4_dns2=""
-    local ipv6_dns1=""
-    local ipv6_dns2=""
-    local gateway=""
+    local public_dns1_ipv4="223.5.5.5"
+    local public_dns2_ipv4="119.29.29.29"
     local netmask="255.255.255.0"
 
     if [ "$driver" = "mtk_pcie" ]; then
@@ -811,43 +841,21 @@ ip_change_fm350()
 
         ipv4_dns1=$(echo "$config" | grep "ipv4dnsserver:" | head -n 1 | awk '{print $2}')
         ipv4_dns2=$(echo "$config" | grep "ipv4dnsserver:" | tail -n 1 | awk '{print $2}')
-        if [ "$ipv4_dns1" = "$ipv4_dns2" ]; then
-            ipv4_dns2="119.29.29.29"
-        fi
-
-        ipv6_dns1=$(echo "$config" | grep "ipv6dnsserver:" | head -n 1 | awk '{print $2}')
-        ipv6_dns2=$(echo "$config" | grep "ipv6dnsserver:" | tail -n 1 | awk '{print $2}')
-
-        m_debug "umbim config: ipv4=$ipv4_config, gateway=$gateway, netmask=$netmask, dns1=$ipv4_dns1, dns2=$ipv4_dns2"
+        [ -z "$ipv4_dns1" ] && ipv4_dns1="$public_dns1_ipv4"
+        [ -z "$ipv4_dns2" ] && ipv4_dns2="$public_dns2_ipv4"
+        # m_debug "umbim config: ipv4=$ipv4_config, gateway=$gateway, netmask=$netmask, dns1=$ipv4_dns1, dns2=$ipv4_dns2"
     else
         at_command="AT+CGPADDR=3"
-        ipv4_config=$(at ${at_port} ${at_command} | cut -d, -f2 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
+        response=$(at ${at_port} ${at_command})
+        ipv4_config=$(echo "$response" | grep "+CGPADDR:" | grep -o '"[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+"' | head -1 | tr -d '"')
         gateway="${ipv4_config%.*}.1"
 
-        local public_dns1_ipv4="223.5.5.5"
-        local public_dns2_ipv4="119.29.29.29"
-        local public_dns1_ipv6="2400:3200::1"
-        local public_dns2_ipv6="2402:4e00::"
-        at_command="AT+GTDNS=3" | grep "+GTDNS: "| grep -E '[0-9]+.[0-9]+.[0-9]+.[0-9]+' | sed -n '1p'
-        local ipv4_dns1=$(echo "${response}" | awk -F'"' '{print $2}' | awk -F',' '{print $1}')
-        [ -z "$ipv4_dns1" ] && {
-            ipv4_dns1="${public_dns1_ipv4}"
-        }
-
-        local ipv4_dns2=$(echo "${response}" | awk -F'"' '{print $4}' | awk -F',' '{print $1}')
-        [ -z "$ipv4_dns2" ] && {
-            ipv4_dns2="${public_dns2_ipv4}"
-        }
-
-        local ipv6_dns1=$(echo "${response}" | awk -F'"' '{print $2}' | awk -F',' '{print $2}')
-        [ -z "$ipv6_dns1" ] && {
-            ipv6_dns1="${public_dns1_ipv6}"
-        }
-
-        local ipv6_dns2=$(echo "${response}" | awk -F'"' '{print $4}' | awk -F',' '{print $2}')
-        [ -z "$ipv6_dns2" ] && {
-            ipv6_dns2="${public_dns2_ipv6}"
-        }
+        response=$(at ${at_port} "AT+GTDNS=3")
+        ipv4_dns=$(echo "$response" | grep "+GTDNS:" | head -1)
+        ipv4_dns1=$(echo "$ipv4_dns" | grep -o '"[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+"' | head -1 | tr -d '"')
+        ipv4_dns2=$(echo "$ipv4_dns" | grep -o '"[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+"' | tail -1 | tr -d '"')
+        [ -z "$ipv4_dns1" ] && ipv4_dns1="$public_dns1_ipv4"
+        [ -z "$ipv4_dns2" ] && ipv4_dns2="$public_dns2_ipv4"
         uci_ipv4=$(uci -q get network.$interface_name.ipaddr)
     fi
     uci set network.${interface_name}.proto='static'
@@ -971,30 +979,34 @@ check_logfile_line()
 unexpected_response_count=0
 at_dial_monitor()
 {
-    check_ip
     at_dial
     ipv4_cache=$ipv4
+    ipv6_cache=$ipv6
+    sleep 5
     while true; do
         check_ip
-        if [ $connection_status -eq 0 ];then
-            at_dial
-            sleep 3
-        elif [ $connection_status -eq -1 ];then
-            unexpected_response_count=$((unexpected_response_count+1))
-            if [ $unexpected_response_count -gt 3 ];then
+        case $connection_status in
+            0)
                 at_dial
-                unexpected_response_count=0
-            fi
-            sleep 10
-        else
-            #检测ipv4是否变化
-            sleep 15
-            if [ "$ipv4" != "$ipv4_cache" ];then
-                handle_ip_change
-                ipv6_cache=$ipv6
-                ipv4_cache=$ipv4
-            fi
-        fi
+                sleep 3
+                ;;
+            -1)
+                unexpected_response_count=$((unexpected_response_count+1))
+                if [ $unexpected_response_count -gt 3 ]; then
+                    at_dial
+                    unexpected_response_count=0
+                fi
+                sleep 5
+                ;;
+            *)
+                if [ "$ipv4" != "$ipv4_cache" ] || [ "$ipv6" != "$ipv6_cache" ]; then
+                    handle_ip_change
+                    ipv4_cache=$ipv4
+                    ipv6_cache=$ipv6
+                fi
+                [ "$mtk_check" -eq 1 ] && { sleep 5; check_mtk_connection || { fastat "$at_port" "AT+CGACT=0,3" && at_dial; }; } || sleep 15
+                ;;
+        esac
         check_logfile_line
     done
 }

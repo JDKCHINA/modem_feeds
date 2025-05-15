@@ -6,7 +6,9 @@ _Author="Siriling Fujr"
 _Maintainer="Fujr <fjrcn@outlook.com>"
 source /usr/share/qmodem/generic.sh
 
-
+vendor_get_disabled_features(){
+    json_add_string "" ""
+}
 
 debug_subject="fibocom_ctrl"
 #获取拨号模式
@@ -77,7 +79,7 @@ get_mode()
             json_add_string "$available_mode" "0"
         fi
     done
-    json_close_objectget_imei
+    json_close_object
 }
 
 #设置拨号模式
@@ -219,7 +221,7 @@ set_network_prefer_nr()
     esac
 
     #设置模组
-    at_command="AT+GTACT=$network_prefer_num"
+    at_command="AT+GTACT=$network_prefer_num,6,3"
     res=$(at $at_port "$at_command")
     json_select_object "result"
     json_add_string "status" "$res"
@@ -826,8 +828,8 @@ set_lockband_nr()
     m_debug "Fibocom set lockband info"
     get_lockband_config_command="AT+GTACT?"
     get_lockband_config_res=$(at $at_port $get_lockband_config_command)
-    network_prefer_config=$(echo $get_lockband_config_res |cut -d : -f 2| awk -F"," '{ print $1","$2","$3}' |tr -d ' ')
-    local lock_band="$network_prefer_config,$lock_band"
+    network_prefer_config=$(echo $get_lockband_config_res |cut -d : -f 2| awk -F"," '{print $1}' |tr -d ' ')
+    local lock_band="$network_prefer_config,6,3,$lock_band"
     local set_lockband_command="AT+GTACT=$lock_band"
     res=$(at $at_port $set_lockband_command)
 }
@@ -1040,7 +1042,7 @@ get_bandwidth()
         "NR")
             case $bandwidth_num in
                 "0") bandwidth="5" ;;
-                "10"|"15"|"20"|"25"|"30"|"40"|"50"|"60"|"70"|"80"|"90"|"100"|"200"|"400") bandwidth="$bandwidth_num" ;;
+                *) bandwidth=$(( $bandwidth_num / 5 )) ;;
             esac
         ;;
 	esac
@@ -1141,7 +1143,22 @@ cell_info()
 
             case $rat in
                 "NR")
-                    network_mode="NR5G-SA Mode"
+                    at_command='AT+GTCAINFO?'
+                    ca_response=$(at $at_port $at_command)
+                    if echo "$ca_response" | grep -q "SCC"; then
+                        has_ca=1
+                        scc_info=$(echo "$ca_response" | grep "SCC" | sed 's/\r//g')
+                        scc_band_num=$(echo "$scc_info" | awk -F',' '{print $3}')
+                        scc_arfcn=$(echo "$scc_info" | awk -F',' '{print $5}')
+                        scc_band=$(get_band "NR" ${scc_band_num})
+                        nr_scc_dl_bandwidth_num=$(echo "$scc_info" | awk -F',' '{print $6}')
+                        nr_scc_dl_bandwidth=$(get_bandwidth "NR" ${nr_scc_dl_bandwidth_num})
+                    fi
+                    if [ $has_ca -eq 1 ]; then
+                        network_mode="NR5G-SA CA Mode"
+                    else
+                        network_mode="NR5G-SA Mode"
+                    fi
                     nr_mcc=$(echo "$response" | awk -F',' '{print $3}')
                     nr_mnc=$(echo "$response" | awk -F',' '{print $4}')
                     nr_tac=$(echo "$response" | awk -F',' '{print $5}')
@@ -1150,8 +1167,10 @@ cell_info()
                     nr_physical_cell_id=$(echo "$response" | awk -F',' '{print $8}')
                     nr_band_num=$(echo "$response" | awk -F',' '{print $9}')
                     nr_band=$(get_band "NR" ${nr_band_num})
-                    nr_dl_bandwidth_num=$(echo "$response" | awk -F',' '{print $10}')
+                    nr_dl_bandwidth_num=$(echo "$ca_response" | grep "PCC" | sed 's/\r//g' | awk -F',' '{print $4}')
                     nr_dl_bandwidth=$(get_bandwidth "NR" ${nr_dl_bandwidth_num})
+                    nr_ul_bandwidth_num=$(echo "$ca_response" | grep "PCC" | sed 's/\r//g' | awk -F',' '{print $5}')
+                    nr_ul_bandwidth=$(get_bandwidth "NR" ${nr_ul_bandwidth_num})
                     nr_sinr_num=$(echo "$response" | awk -F',' '{print $11}')
                     nr_sinr=$(get_sinr "NR" ${nr_sinr_num})
                     nr_rxlev_num=$(echo "$response" | awk -F',' '{print $12}')
@@ -1259,16 +1278,23 @@ cell_info()
     class="Cell Information"
     add_plain_info_entry "network_mode" "$network_mode" "Network Mode"
     case $network_mode in
-    "NR5G-SA Mode")
+    "NR5G-SA Mode"|"NR5G-SA CA Mode")
         add_plain_info_entry "MMC" "$nr_mcc" "Mobile Country Code"
         add_plain_info_entry "MNC" "$nr_mnc" "Mobile Network Code"
         add_plain_info_entry "Duplex Mode" "$nr_duplex_mode" "Duplex Mode"
         add_plain_info_entry "Cell ID" "$nr_cell_id" "Cell ID"
         add_plain_info_entry "Physical Cell ID" "$nr_physical_cell_id" "Physical Cell ID"
         add_plain_info_entry "TAC" "$nr_tac" "Tracking area code of cell served by neighbor Enb"
-        add_plain_info_entry "ARFCN" "$nr_arfcn" "Absolute Radio-Frequency Channel Number"
-        add_plain_info_entry "Band" "$nr_band" "Band"
-        add_plain_info_entry "DL Bandwidth" "$nr_dl_bandwidth" "DL Bandwidth"
+        if [ $has_ca -eq 1 ]; then
+            add_plain_info_entry "ARFCN" "$nr_arfcn / $scc_arfcn" "Absolute Radio-Frequency Channel Number"
+            add_plain_info_entry "Band" "$nr_band / $scc_band" "Band"
+            add_plain_info_entry "DL Bandwidth" "${nr_dl_bandwidth}M / ${nr_scc_dl_bandwidth}M" "DL Bandwidth"
+        else
+            add_plain_info_entry "ARFCN" "$nr_arfcn" "Absolute Radio-Frequency Channel Number"
+            add_plain_info_entry "Band" "$nr_band" "Band"
+            add_plain_info_entry "DL Bandwidth" "${nr_dl_bandwidth}M" "DL Bandwidth"
+        fi
+        add_plain_info_entry "UL Bandwidth" "${nr_ul_bandwidth}M" "UL Bandwidth"
         add_bar_info_entry "RSRP" "$nr_rsrp" "Reference Signal Received Power" -187 -29 dBm
         add_bar_info_entry "RSRQ" "$nr_rsrq" "Reference Signal Received Quality" -43 20 dBm
         add_bar_info_entry "SINR" "$nr_sinr" "Signal to Interference plus Noise Ratio Bandwidth" -23 40 dB

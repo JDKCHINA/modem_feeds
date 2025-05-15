@@ -73,9 +73,15 @@ extend_prefix = s:taboption("advanced", Flag, "extend_prefix", translate("Extend
 extend_prefix.description = translate("Once checking, the prefix will be apply to lan zone")
 extend_prefix.default = "0"
 
+-- 软重启
 soft_reboot = s:taboption("advanced", Flag, "soft_reboot", translate("Soft Reboot"))
 soft_reboot.description = translate("enable modem soft reboot")
 soft_reboot.default = "0"
+
+-- 350 v4/v6存活检查
+mtk_check = s:taboption("advanced", Flag, "mtk_check", translate("MTK V4/V6 Check"))
+mtk_check.description = translate("Only for Fibocom MTK modem.")
+mtk_check.default = "0"
 
 -- 网络类型
 pdp_type= s:taboption("advanced", ListValue, "pdp_type", translate("PDP Type"))

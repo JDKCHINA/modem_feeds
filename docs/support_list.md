@@ -31,6 +31,11 @@ ec25 | lte |✔ usb(qmi,gobinet,ecm,mbim,rndis,ncm) | ✘
 ec21 | lte |✔ usb(qmi,gobinet,ecm,mbim,rndis,ncm) | ✘
 ec200a | lte |✔ usb(ecm,mbim,rndis,ncm) | ✘
 
+# huawei
+Model | Platform | USB  | PCIe 
+--- | --- | --- | ---
+mt5700m-cn | hisilicon |✔ usb(ecm,ncm) | ✘
+
 # fibocom
 Model | Platform | USB  | PCIe 
 --- | --- | --- | ---

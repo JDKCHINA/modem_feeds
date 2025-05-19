@@ -625,6 +625,8 @@ ecm_hang()
         fi
     elif [ "$manufacturer" = "meig" ]; then
         at_command="AT$QCRMCALL=0,1,1,2,1"
+    elif [ "$manufacturer" = "huawei" ]; then
+        at_command="AT^NDISDUP=0,0"
     else
         at_command='ATI'
     fi
@@ -747,6 +749,10 @@ at_dial()
                     at_command="AT+QNETDEVCTL=1,3,1"
                     cgdcont_command="AT+CGDCONT=1,\"$pdp_type\",\"$apn\""
                     ;;
+                "hisilicon")
+                    at_command="AT+QNETDEVCTL=1,1,1"
+                    cgdcont_command=""
+                    ;;
                 "lte")
                     if [ "$define_connect" = "3" ];then
                         at_command="AT+QNETDEVCTL=3,3,1"
@@ -789,7 +795,7 @@ at_dial()
         "huawei")
             case $platform in
                 "hisilicon")
-                    at_command="AT^SETAUTODIAL=1,1"
+                    at_command="AT^NDISDUP=1,1"
                     cgdcont_command="AT+CGDCONT=1,\"$pdp_type\""
                     ;;
             esac

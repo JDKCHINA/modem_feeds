@@ -6,6 +6,7 @@ ep06 | lte |✔ usb(qmi,ecm,mbim,rndis) | ✘
 em12 | lte |✔ usb(qmi,ecm,mbim,rndis) | ✘
 em120k | lte12 |✔ usb(qmi,ecm,mbim,rndis) | ✘
 rg200u-cn | unisoc |✔ usb(ecm,mbim,rndis,ncm) | ✘
+rg801 | hisilicon |✔ usb(ecm,rndis,ncm) | ✘
 rm500u-cn | unisoc |✔ usb(ecm,mbim,rndis,ncm) | ✘
 rm500u-ea | unisoc |✔ usb(ecm,mbim,rndis,ncm) | ✘
 rm500s-ce | qualcomm |✔ usb(qmi,gobinet,ecm,mbim,rndis,ncm) | ✔ pcie(qmi,gobinet,mbim)
@@ -21,6 +22,7 @@ rm505q-ae | qualcomm |✔ usb(qmi,gobinet,ecm,mbim,rndis,ncm) | ✘
 rm520n-cn | qualcomm |✔ usb(qmi,gobinet,ecm,mbim,rndis,ncm) | ✘
 rm520n-eu | qualcomm |✔ usb(qmi,gobinet,ecm,mbim,rndis,ncm) | ✔ pcie(qmi,gobinet,mbim)
 rm520n-gl | qualcomm |✔ usb(qmi,gobinet,ecm,mbim,rndis,ncm) | ✔ pcie(qmi,gobinet,mbim)
+rm551e-gl | qualcomm |✔ usb(qmi,gobinet,ecm,mbim,rndis,ncm) | ✔ pcie(qmi,gobinet,mbim)
 rg501q-eu | qualcomm |✔ usb(qmi,gobinet,ecm,mbim,rndis,ncm) | ✔ pcie(qmi,gobinet,mbim)
 rg520n-eu | qualcomm |✔ usb(qmi,gobinet,ecm,mbim,rndis,ncm) | ✔ pcie(qmi,gobinet,mbim)
 mh8001-eu | qualcomm |✔ usb(qmi,gobinet,ecm,mbim,rndis,ncm) | ✔ pcie(qmi,gobinet,mbim)
@@ -35,6 +37,7 @@ ec200a | lte |✔ usb(ecm,mbim,rndis,ncm) | ✘
 Model | Platform | USB  | PCIe 
 --- | --- | --- | ---
 mt5700m-cn | hisilicon |✔ usb(ecm,ncm) | ✘
+mh5000-31 | hisilicon |✔ usb(ecm) | ✘
 
 # fibocom
 Model | Platform | USB  | PCIe 
@@ -47,6 +50,7 @@ rw350r-gl | mediatek |✔ usb(rndis) | ✔ pcie(mbim)
 fm150-ae | qualcomm |✔ usb(qmi,gobinet,ecm,mbim,rndis,ncm) | ✔ pcie(qmi,mbim)
 fm160-cn | qualcomm |✔ usb(qmi,gobinet,ecm,mbim,rndis,ncm) | ✘
 fm160-na | qualcomm |✔ usb(qmi,gobinet,ecm,mbim,rndis,ncm) | ✘
+fm190w-gl | qualcomm |✔ usb(qmi,gobinet,ecm,mbim,rndis,ncm) | ✔ pcie(qmi)
 nl668 | lte |✔ usb(ecm,rndis,ncm) | ✘
 nl678 | lte |✔ usb(qmi,ecm,rndis,ncm) | ✘
 

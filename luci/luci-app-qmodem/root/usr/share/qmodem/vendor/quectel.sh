@@ -53,6 +53,15 @@ get_mode()
                 *) mode="${mode_num}" ;;
             esac
         ;;
+        "hisilicon")
+            case "$mode_num" in
+                "1") mode="ecm" ;;
+                "3") mode="rndis" ;;
+                "4") mode="ncm" ;;
+                "5") mode="ncm" ;;
+                *) mode="ncm" ;;
+            esac
+        ;;
         "lte12"|\
         "lte")
             case "$mode_num" in
@@ -145,6 +154,9 @@ get_network_prefer()
         "unisoc")
             get_network_prefer_nr
         ;;
+        "hisilicon")
+            get_network_prefer_nr
+        ;;
         "lte")
             get_network_prefer_lte
         ;;
@@ -160,6 +172,9 @@ get_network_prefer()
             json_add_string 5G $network_prefer_5g
         ;;
         "unisoc")
+            json_add_string 5G $network_prefer_5g
+        ;;
+        "hisilicon")
             json_add_string 5G $network_prefer_5g
         ;;
     esac
